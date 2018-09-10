@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<link href="../node_modules/mocha/mocha.css" rel="stylesheet" />
+
+<div id="mocha"></div>
+
+<script src="../node_modules/mocha/mocha.js"></script>
+<script src="../node_modules/chai/chai.js"></script>
+<script src="../dist/hello-webworker.js"></script>
+<script>
+const HelloWebWorker = window['hello-webworker']
+const expect = chai.expect
+
+mocha.setup('bdd')
+
+// ------------------------- tests --------------------
+it('normal', (done) => {
+  let worker = new HelloWebWorker(`
+    function(a, b) {
+      return a + b
+    }
+  `)
+  worker.invoke(1, 2).then((res) => {
+    expect(res).to.equal(3)
+    done()
+  })
+})
+
+it('import scripts text', (done) => {
+  let worker = new HelloWebWorker(
+    `
+    var x = 10
+    var y = 15
+    `, 
+    `
+    function(a, b) {
+      return a + b + x + y
+    }
+    `
+  )
+  worker.invoke(1, 2).then((res) => {
+    expect(res).to.equal(28)
+    done()
+  })
+})
+
+it('importScripts', (done) => {
+  let urls = window.location.href.split('/')
+  urls.pop()
+  let path = urls.join('/') + '/worker.js'
+  let worker = new HelloWebWorker([path], `
+    function(a, b) {
+      return a + b + x + y
+    }
+  `)
+  worker.invoke(1, 2).then((res) => {
+    expect(res).to.equal(28)
+    done()
+  })
+})
+// ----------------------------------------------------
+
+mocha.run()
+</script>
